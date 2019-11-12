@@ -95,20 +95,32 @@ def frequency_response(wave, order_v1_lowpass, order_v1_highpass, order_v2,
     plt.xlabel('Frequency [Hz]')
     plt.grid()
     #plt.xlim([0, 150])    
-    plt.savefig("Bandpass Filter {} ({} - {} Hz) Frequency Response".format(wave, int(lowcut), int(highcut)))
+#    plt.savefig("Bandpass Filter {} ({} - {} Hz) Frequency Response".format(wave, int(lowcut), int(highcut)))
     plt.show()
 
 #%% Test the filter design with specific orders 
     
-frequency_response('theta', order_v1_lowpass=6, order_v1_highpass=5, order_v2=3, 
-                   freq_range=freq_range, fs=fs)   
-
-frequency_response('alpha', order_v1_lowpass=7, order_v1_highpass=7, order_v2=3, 
-                   freq_range=freq_range, fs=fs)  
-
+#frequency_response('theta', order_v1_lowpass=6, order_v1_highpass=5, order_v2=3, 
+#                   freq_range=freq_range, fs=fs)   
+#
+#frequency_response('alpha', order_v1_lowpass=7, order_v1_highpass=7, order_v2=3, 
+#                   freq_range=freq_range, fs=fs)  
+#
 frequency_response('beta', order_v1_lowpass=9, order_v1_highpass=7, order_v2=3, 
                    freq_range=freq_range, fs=fs)
+#
+#frequency_response('gamma', order_v1_lowpass=13, order_v1_highpass=9, order_v2=5, 
+#                   freq_range=freq_range, fs=fs)
 
-frequency_response('gamma', order_v1_lowpass=13, order_v1_highpass=9, order_v2=5, 
-                   freq_range=freq_range, fs=fs)
+#%% Implementation
+x = np.linspace(0, 1, int(1*fs))
+y = np.sin(2*np.pi*20*x) + np.sin(2*np.pi*50*x)
+(lowcut, highcut) = freq_range['beta']
+y_filtered = butter_bandpass_filter(y, lowcut, highcut, 'v1', fs, [9, 7])
 
+fig, ax = plt.subplots(2, 1, sharex=True, figsize=(8, 8))
+ax[0].plot(x, y, 'b', lw=3)
+ax[1].plot(x, np.sin(2*np.pi*20*x), 'k--', lw=1.5, alpha=0.5)
+ax[1].plot(x, y_filtered, 'r', lw=3)
+plt.xlabel('time (sec)')
+plt.show()
