@@ -6,3 +6,7 @@ Different frequency bands may require **different orders** to design the filter.
 In this section, I evaluate two different filter designs.
 - *Version 1* : **Lowpass filter + Highpass filter**
 - *Version 2* : **Bandpass filter**
+
+To optimize the filter performance for narrower bandwidth, there I used [FIR filter](https://scipy-cookbook.readthedocs.io/items/FIRFilter.html).
+
+- *Version 3* : **FIR Bandpass filter**
