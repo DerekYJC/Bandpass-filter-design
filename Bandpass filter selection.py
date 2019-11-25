@@ -95,24 +95,24 @@ def frequency_response(wave, order_v1_lowpass, order_v1_highpass, order_v2,
     plt.xlabel('Frequency [Hz]')
     plt.grid()
     #plt.xlim([0, 150])    
-#    plt.savefig("Bandpass Filter {} ({} - {} Hz) Frequency Response".format(wave, int(lowcut), int(highcut)))
+    plt.savefig("Bandpass Filter {} ({} - {} Hz) Frequency Response".format(wave, int(lowcut), int(highcut)))
     plt.show()
 
 #%% Test the filter design with specific orders 
     
-#frequency_response('theta', order_v1_lowpass=6, order_v1_highpass=5, order_v2=3, 
-#                   freq_range=freq_range, fs=fs)   
+frequency_response('theta', order_v1_lowpass=6, order_v1_highpass=5, order_v2=3, 
+                   freq_range=freq_range, fs=fs)   
 #
-#frequency_response('alpha', order_v1_lowpass=7, order_v1_highpass=7, order_v2=3, 
-#                   freq_range=freq_range, fs=fs)  
+frequency_response('alpha', order_v1_lowpass=7, order_v1_highpass=7, order_v2=3, 
+                   freq_range=freq_range, fs=fs)  
 #
 frequency_response('beta', order_v1_lowpass=9, order_v1_highpass=7, order_v2=3, 
                    freq_range=freq_range, fs=fs)
 #
-#frequency_response('gamma', order_v1_lowpass=13, order_v1_highpass=9, order_v2=5, 
-#                   freq_range=freq_range, fs=fs)
+frequency_response('gamma', order_v1_lowpass=13, order_v1_highpass=9, order_v2=5, 
+                   freq_range=freq_range, fs=fs)
 
-#%% Implementation
+#%% Implementation (20 Hz + 50 Hz sample data --> 20 Hz filtered data)
 x = np.linspace(0, 1, int(1*fs))
 y = np.sin(2*np.pi*20*x) + np.sin(2*np.pi*50*x)
 (lowcut, highcut) = freq_range['beta']
@@ -124,3 +124,57 @@ ax[1].plot(x, np.sin(2*np.pi*20*x), 'k--', lw=1.5, alpha=0.5)
 ax[1].plot(x, y_filtered, 'r', lw=3)
 plt.xlabel('time (sec)')
 plt.show()
+
+#%% Version 3 --- FIR filter
+#   =========================================================================
+#   FIR filter (num_coeffs should be high for narrower bandpass filter)
+#   =========================================================================
+
+from scipy.signal import firwin
+
+def fir_bandpass(lowcut, highcut, fs, num_coeffs=10000):
+    coefs = firwin(num_coeffs, [lowcut/fs*2, highcut/fs*2], pass_zero=False)
+    return coefs
+
+def frequency_response_fir(wave, freq_range, fs, num_coeffs=10000):
+    
+    (lowcut, highcut) = freq_range[wave]
+    coefs = fir_bandpass(lowcut, highcut, fs)
+    w, h = freqz(coefs, worN=num_coeffs)
+    
+    fig, ax = plt.subplots(figsize=(15, 6))
+    ax.plot(0.5*fs*w/np.pi, np.abs(h), 'b', linewidth=3)
+    ax.plot(lowcut, 0.5, 'ko')
+    ax.axvline(lowcut, color='k', linewidth=2)
+    ax.plot(highcut, 0.5, 'ko')
+    ax.axvline(highcut, color='k', linewidth=2)
+    plt.xlim(0, lowcut+highcut)
+    plt.title("FIR Filter {} ({} - {} Hz) Frequency Response".format(wave, lowcut, highcut))
+    plt.xlabel('Frequency [Hz]')
+    plt.grid()
+    plt.savefig("FIR Filter {} ({} - {} Hz) Frequency Response".format(wave, int(lowcut), highcut))
+    plt.show()
+
+def fir_bandpass_filter(data, lowcut, highcut, fs):
+    coefs = fir_bandpass(lowcut, highcut, fs)
+    y = filtfilt(coefs, 1.0, np.ravel(data))
+    return y  
+
+frequency_response_fir('alpha', freq_range=freq_range, fs=fs)  
+    
+#%% Implementation (10 Hz + 20 Hz sample data --> 10 Hz filtered data)
+x = np.linspace(0, 10, int(10*fs))
+y = np.sin(2*np.pi*10*x) + np.sin(2*np.pi*20*x)
+(lowcut, highcut) = freq_range['alpha']
+y_filtered = fir_bandpass_filter(y, lowcut, highcut, fs)
+
+fig, ax = plt.subplots(2, 1, sharex=True, figsize=(8, 8))
+ax[0].plot(x, y, 'b', lw=3)
+ax[0].set_xlim([0, 1])
+ax[1].plot(x, np.sin(2*np.pi*10*x), 'k--', lw=1.5, alpha=0.5)
+ax[1].plot(x, y_filtered, 'r', lw=3)
+ax[1].set_xlim([0, 1])
+plt.xlabel('time (sec)')
+plt.show()
+
+
